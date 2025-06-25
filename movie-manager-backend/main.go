@@ -353,10 +353,9 @@ func main() {
 	if port == "" {
 		port = "8070"
 	}
-	router.Run(":" + port)
 
 	log.Printf("Server starting on port %s", port)
-	if err := router.Run(port); err != nil {
+	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
