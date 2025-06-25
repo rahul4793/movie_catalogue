@@ -4,7 +4,7 @@ A full-stack web application to manage your movie collection. Allows user to cre
 
 ---
 ##  Live Link 
-https://movie-catalogue-qijelqgdv-rohis-projects-5fc5c447.vercel.app/
+https://movie-catalogue-neon.vercel.app/
 
 ##  Features
 
