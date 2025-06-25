@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 // movie model
@@ -33,7 +34,7 @@ type UpdateMovieInput struct {
 
 var db *sql.DB
 
-// initializes the PostgreSQL 
+// initializes the PostgreSQL
 func initDB() {
 	connStr := "postgresql://neondb_owner:g09xtCeUlpWQ@ep-odd-tooth-a5o0n53g-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 	var err error
@@ -64,7 +65,7 @@ func initDB() {
 	log.Println("Movies table checked or created.")
 }
 
-// create 
+// create
 func createMovie(c *gin.Context) {
 	var movie Movie
 	if err := c.ShouldBindJSON(&movie); err != nil {
@@ -103,7 +104,7 @@ func createMovie(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, movie) 
+	c.JSON(http.StatusCreated, movie)
 }
 
 // updateMovie handles updating an existing movie
@@ -196,7 +197,7 @@ func getMovies(c *gin.Context) {
 	genreFilter := c.Query("genre")
 	yearFilterStr := c.Query("year")
 	pageStr := c.DefaultQuery("page", "1")
-	pageSizeStr := c.DefaultQuery("pageSize", "8") 
+	pageSizeStr := c.DefaultQuery("pageSize", "8")
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
@@ -207,12 +208,12 @@ func getMovies(c *gin.Context) {
 		pageSize = 8
 	}
 
-	offset := (page - 1) * pageSize 
+	offset := (page - 1) * pageSize
 
 	// Build filter clauses and arguments
 	filterClauses := []string{}
 	filterArgs := []interface{}{}
-	filterArgCount := 1 
+	filterArgCount := 1
 
 	if searchQuery != "" {
 		filterClauses = append(filterClauses, fmt.Sprintf("title ILIKE $%d", filterArgCount))
@@ -250,7 +251,7 @@ func getMovies(c *gin.Context) {
 
 	// Build the arguments for the main SELECT query
 	selectArgs := make([]interface{}, len(filterArgs))
-	copy(selectArgs, filterArgs) 
+	copy(selectArgs, filterArgs)
 
 	// for OFFSET and LIMIT
 	offsetPlaceholder := filterArgCount
@@ -348,7 +349,12 @@ func main() {
 	router.PUT("/movies/:id", updateMovie)
 	router.DELETE("/movies/:id", deleteMovie)
 
-	port := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	router.Run(":" + port)
+
 	log.Printf("Server starting on port %s", port)
 	if err := router.Run(port); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
