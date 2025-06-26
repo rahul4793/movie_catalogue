@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -36,19 +37,29 @@ var db *sql.DB
 
 // initializes the PostgreSQL
 func initDB() {
-	connStr := "postgresql://neondb_owner:g09xtCeUlpWQ@ep-odd-tooth-a5o0n53g-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-	var err error
-	db, err = sql.Open("postgres", connStr)
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
+		log.Printf("Warning: Could not load .env file.%v", err)
+	}
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		log.Fatalf("Fatal: DATABASE_URL environment variable is not set.")
+	} else {
+		log.Println("DATABASE_URL successfully loaded from environment.")
 	}
 
-	// cheching db connection
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("Error connecting to the database: %v", err)
+	var openErr error
+	db, openErr = sql.Open("postgres", connStr)
+	if openErr != nil {
+		log.Fatalf("Error opening database connection with string '%s': %v", connStr, openErr)
 	}
-	log.Println("Successfully connected to DB")
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatalf("Error connecting to the database with string '%s': %v", connStr, pingErr)
+	}
+
+	log.Println("Successfully connected to PostgreSQL database!")
 
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS movies (
